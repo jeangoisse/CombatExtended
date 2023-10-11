@@ -107,16 +107,13 @@ namespace CombatExtended.Compatibility
 
         private static void OnIntercepted(Hediff_Overshield interceptor, ProjectileCE projectile)
         {
-            var newExactPos = projectile.ExactPosition;
-            var exactPosition = CE_Utility.IntersectionPoint(projectile.OriginIV3.ToVector3(), projectile.ExactPosition, interceptor.pawn.Position.ToVector3(), interceptor.OverlaySize).OrderBy(x => (projectile.OriginIV3.ToVector3() - x).sqrMagnitude).First();
+            var exactPosition = CE_Utility.IntersectionPoint(projectile.OriginIV3.ToVector3(), projectile.ExactPosition, interceptor.pawn.Position.ToVector3Shifted(), interceptor.OverlaySize).OrderBy(x => (projectile.OriginIV3.ToVector3() - x).sqrMagnitude).First();
             projectile.ExactPosition = exactPosition;
-            new Traverse(interceptor).Field("lastInterceptAngle").SetValue(newExactPos.AngleToFlat(interceptor.pawn.TrueCenter()));
+            new Traverse(interceptor).Field("lastInterceptAngle").SetValue(exactPosition.AngleToFlat(interceptor.pawn.TrueCenter()));
             new Traverse(interceptor).Field("lastInterceptTicks").SetValue(Find.TickManager.TicksGame);
             new Traverse(interceptor).Field("drawInterceptCone").SetValue(true);
 
-            Effecter eff = new Effecter(EffecterDefOf.Interceptor_BlockedProjectile);
-            eff.Trigger(new TargetInfo(newExactPos.ToIntVec3(), interceptor.pawn.Map, false), TargetInfo.Invalid);
-            eff.Cleanup();
+            FleckMakerCE.ThrowPsycastShieldFleck(exactPosition, projectile.Map, 0.35f);
             projectile.InterceptProjectile(interceptor, projectile.ExactPosition, true);
         }
     }
